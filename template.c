@@ -131,8 +131,32 @@ int** warshall(Graph* g) {
         closure[i] = calloc(g->n, sizeof(int));
     }
 
-    // Code goes here
-    
+    // initialising closure matrix to adjacency matrix
+    int n_nodes = g->n;
+    for(int i = 0; i < n_nodes; i++) {
+        for(int j = 0; j < n_nodes; j++) {
+            closure[i][j] = g->adj[i][j];
+        }
+    }
+
+    for (int k = 0; k < n_nodes; k++) {
+        for (int i = 0; i < n_nodes; i++) {
+            for (int j = 0; j < n_nodes; j++) {
+                if (closure[i][k] == 1 && closure[k][j] == 1) {
+                    closure[i][j] = 1;
+                }
+            }
+        }
+    }
+
+    // print the closure matrix
+    for(int i = 0; i < n_nodes; i++) {
+        for(int j = 0; j < n_nodes; j++) {
+            printf("%d ", closure[i][j]);
+        }
+        printf("\n");
+    }
+
     return closure; // Do not modify
 }
 
@@ -143,6 +167,17 @@ int** warshall(Graph* g) {
 int find_impossible_pairs(Graph* g) {
     int** closure = warshall(g); // Do not modify
     
+    int imp_count = 0;
+
+    for (int i = 0; i < g->n; i++) {
+        for (int j = i + 1; j < g->n; j++) {
+            if (closure[i][j] == 0) {
+                imp_count++;
+            }
+        }
+    }
+
+    return imp_count;
 }
 
 /**
@@ -206,13 +241,14 @@ bool maharaja_express(Graph* g, int source) {
 }
 
 int main() {
-    char input_file_path[100] = "testcase_1.txt"; // Can be modified
+    char input_file_path[100] = "testcase_3.txt"; // Can be modified
     Graph* g = create_graph(input_file_path); // Do not modify
     
     // Code goes here
     printf("The number of junctions: %d\n", find_junctions(g));
     printf("Sheldon's tour (same city) is possible: %d\n", sheldons_tour(g, true));
     printf("Sheldon's tour (diff city) is possible: %d\n", sheldons_tour(g, false));
+    printf("Number of impossible pairs: %d\n", find_impossible_pairs(g));
 
     return 0;
 }
