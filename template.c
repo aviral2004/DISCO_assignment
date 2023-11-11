@@ -59,7 +59,22 @@ Graph* create_graph(char input_file_path[]) {
  * Return the number of junctions.
 */
 int find_junctions(Graph* g) {
-    
+    int n_nodes = g->n;
+    int junctions = 0;
+
+    for (int i = 0; i < n_nodes; i++) {
+        int degree = 0;
+        for (int j = 0; j < n_nodes; j++) {
+            if (g->adj[i][j] == 1) {
+                degree++;
+            }
+        }
+        if (degree > 3) {
+            junctions++;
+        }
+    }
+
+    return junctions;
 }
 
 /**
@@ -70,7 +85,39 @@ int find_junctions(Graph* g) {
  * If false, then question 2(b) must be solved.
 */
 bool sheldons_tour(Graph* g, bool SAME_STATION) {
-    
+    int n_nodes = g->n;
+
+    if (SAME_STATION) {
+        for (int i = 0; i < n_nodes; i++) {
+            int degree = 0;
+            for (int j = 0; j < n_nodes; j++) {
+                if (g->adj[i][j] == 1) {
+                    degree++;
+                }
+            }
+            if (degree % 2 == 1) {
+                return false;
+            }
+        }
+    } else {
+        int odd_degree = 0;
+        for (int i = 0; i < n_nodes; i++) {
+            int degree = 0;
+            for (int j = 0; j < n_nodes; j++) {
+                if (g->adj[i][j] == 1) {
+                    degree++;
+                }
+            }
+            if (degree % 2 == 1) {
+                odd_degree++;
+            }
+        }
+        if (odd_degree != 2) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
@@ -163,6 +210,9 @@ int main() {
     Graph* g = create_graph(input_file_path); // Do not modify
     
     // Code goes here
+    printf("The number of junctions: %d\n", find_junctions(g));
+    printf("Sheldon's tour (same city) is possible: %d\n", sheldons_tour(g, true));
+    printf("Sheldon's tour (diff city) is possible: %d\n", sheldons_tour(g, false));
 
     return 0;
 }
