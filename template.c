@@ -149,14 +149,6 @@ int** warshall(Graph* g) {
         }
     }
 
-    // print the closure matrix
-    for(int i = 0; i < n_nodes; i++) {
-        for(int j = 0; j < n_nodes; j++) {
-            printf("%d ", closure[i][j]);
-        }
-        printf("\n");
-    }
-
     return closure; // Do not modify
 }
 
@@ -185,7 +177,30 @@ int find_impossible_pairs(Graph* g) {
  * Return the number of vital train tracks.
 */
 int find_vital_train_tracks(Graph* g) {
+    int n = g->n;
+
+    int** closure = warshall(g);
+    int vital_count = 0;
     
+    // check if removing an edge makes the graph disconnected
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (g->adj[i][j] == 1) {
+                g->adj[i][j] = 0;
+                g->adj[j][i] = 0;
+
+                int** closure_new = warshall(g);
+
+                if (closure_new[i][j] == 0) {
+                    vital_count++;
+                }
+
+                g->adj[i][j] = 1;
+                g->adj[j][i] = 1;
+            }
+        }
+    }
+    return vital_count;
 }
 
 /**
@@ -197,8 +212,40 @@ int find_vital_train_tracks(Graph* g) {
 */
 int* upgrade_railway_stations(Graph* g) {
     int* upgrades = calloc(g->n, sizeof(int)); // Do not modify
-    
-    // Code goes here
+
+    int** adj = g->adj; // Adjacency matrix
+    int n = g->n; // Number of stations
+
+    // using DFS to check if bipartite
+    for (int i = 0; i < n; i++)
+        upgrades[i] = -1;
+
+    for (int i = 0; i < n; i++) {
+        if (upgrades[i] == -1) {
+            upgrades[i] = 1;
+
+            int stack[n];
+            int top = -1;
+            stack[++top] = i;
+
+            while (top >= 0) {
+                int v = stack[top--];
+
+                for (int u = 0; u < n; u++) {
+                    if (adj[v][u] == 1 && upgrades[u] == -1) {
+                        upgrades[u] = 1 - upgrades[v];
+                        stack[++top] = u;
+                    } else if (adj[v][u] && upgrades[u] == upgrades[v]) {
+                        // If conflict found, set upgrades to -1 and return
+                        for (int j = 0; j < n; j++) {
+                            upgrades[j] = -1;
+                        }
+                        return upgrades;
+                    }
+                }
+            }
+        }
+    }
 
     return upgrades; // Do not modify
 }
@@ -209,7 +256,36 @@ int* upgrade_railway_stations(Graph* g) {
  * city_x is the index of X, city_y is the index of Y
 */
 int distance(Graph* g, int city_x, int city_y) {
-    
+    int** dist = (int**)malloc(g->n * sizeof(int*));
+
+    int n_nodes = g->n;
+    int INF = 1000000;
+
+    for (int i = 0; i < n_nodes; i++) {
+        dist[i] = (int*)malloc(g->n * sizeof(int));
+        for (int j = 0; j < n_nodes; j++) {
+            if (g->adj[i][j] == 0) {
+                dist[i][j] = INF;
+            } else {
+                dist[i][j] = 1;
+            }
+        }
+    }
+
+    for (int k = 0; k < n_nodes; k++) {
+        for (int i = 0; i < n_nodes; i++) {
+            for (int j = 0; j < n_nodes; j++) {
+                if (dist[i][k] + dist[k][j] < dist[i][j])
+                    dist[i][j] = dist[i][k] + dist[k][j];
+            }
+        }
+    }
+
+    if (dist[city_x][city_y] != INF) {
+        return dist[city_x][city_y];
+    } else {
+        return -1;
+    }
 }
 
 /**
@@ -217,14 +293,73 @@ int distance(Graph* g, int city_x, int city_y) {
  * Return the index of any one possible railway capital in the network
 */
 int railway_capital(Graph* g) {
-    
+    int** dist = (int**)malloc(g->n * sizeof(int*));
+
+    int n_nodes = g->n;
+    int INF = 1000000;
+
+    for (int i = 0; i < n_nodes; i++) {
+        dist[i] = (int*)malloc(g->n * sizeof(int));
+        for (int j = 0; j < n_nodes; j++) {
+            if (g->adj[i][j] == 0) {
+                dist[i][j] = INF;
+            } else {
+                dist[i][j] = 1;
+            }
+        }
+    }
+
+    for (int k = 0; k < n_nodes; k++) {
+        for (int i = 0; i < n_nodes; i++) {
+            for (int j = 0; j < n_nodes; j++) {
+                if (dist[i][k] + dist[k][j] < dist[i][j])
+                    dist[i][j] = dist[i][k] + dist[k][j];
+            }
+        }
+    }
+
+    int min = 100000;
+    int min_elem = 0;
+    for (int i = 0; i < n_nodes; i++) {
+        int dist_sum = 0;
+        for (int j = 0; j < n_nodes; j++) {
+            dist_sum += dist[i][j];
+        }
+        if (dist_sum < min) {
+            min = dist_sum;
+            min_elem = i;
+        }
+    }
+
+    return min_elem;
 }
 
 /**
  * Helper function for Q.8
 */
 bool maharaja_express_tour(Graph* g, int source, int current_city, int previous_city, int* visited) {
+    visited[current_city] = 1;
     
+    // Iterate through adjacent cities
+    for (int i = 0; i < g->n; ++i) {
+        if (g->adj[current_city][i]) {
+            // If the adjacent city is the source city it's a valid tour
+            if (i == source && previous_city != source) {
+                return true;
+            }
+            
+            // If the adjacent city is not the previous city and not visited, explore further
+            if (i != previous_city && visited[i] == 0) {
+                if (maharaja_express_tour(g, source, i, current_city, visited)) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // Unmark the current city before returning
+    visited[current_city] = 0;
+    return false;
 }
 
 /**
@@ -237,7 +372,35 @@ bool maharaja_express(Graph* g, int source) {
     for(int i = 0; i < g->n; i++) {
         visited[i] = 0;
     }
-    // Hint: Call the helper function and pass the visited array created here.
+
+    int n_nodes = g->n;
+
+    int** closure = warshall(g);
+    
+    // if source is part of a cycle, then it is possible. to check for cycle we look at vital edges
+    for (int i = 0; i < n_nodes; i++) {
+        if (g->adj[source][i] == 1) {
+            g->adj[source][i] = 0;
+            g->adj[i][source] = 0;
+
+            bool vital = false;
+
+            int** closure_new = warshall(g);
+
+            if (closure_new[source][i] == 0) {
+                vital = true;
+            }
+
+            g->adj[source][i] = 1;
+            g->adj[i][source] = 1;
+
+            if (!vital) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 int main() {
@@ -249,6 +412,28 @@ int main() {
     printf("Sheldon's tour (same city) is possible: %d\n", sheldons_tour(g, true));
     printf("Sheldon's tour (diff city) is possible: %d\n", sheldons_tour(g, false));
     printf("Number of impossible pairs: %d\n", find_impossible_pairs(g));
+    printf("Number of vital train tracks: %d\n", find_vital_train_tracks(g));
+    int* upgrades = upgrade_railway_stations(g);
+    printf("Upgrades: ");
+    for(int i = 0; i < g->n; i++) {
+        printf("%d ", upgrades[i]);
+    }
+    printf("\n");
+    printf("Distance between 4 and 5: %d\n", distance(g, 4-1, 5-1));
+    printf("Distance between 4 and 6: %d\n", distance(g, 4-1, 6-1));
+    printf("Distance between 1 and 5: %d\n", distance(g, 1-1, 5-1));
+    printf("Distance between 2 and 5: %d\n", distance(g, 2-1, 5-1));
+
+    printf("Railway capital: %d\n", railway_capital(g));
+
+    printf("Maharaja Express tour (1): %d\n", maharaja_express(g, 1-1));
+    printf("Maharaja Express tour (2): %d\n", maharaja_express(g, 2-1));
+    printf("Maharaja Express tour (3): %d\n", maharaja_express(g, 3-1));
+    printf("Maharaja Express tour (4): %d\n", maharaja_express(g, 4-1));
+    printf("Maharaja Express tour (5): %d\n", maharaja_express(g, 5-1));
+    printf("Maharaja Express tour (6): %d\n", maharaja_express(g, 6-1));
+    printf("Maharaja Express tour (7): %d\n", maharaja_express(g, 7-1));
+    printf("Maharaja Express tour (8): %d\n", maharaja_express(g, 8-1));
 
     return 0;
 }
