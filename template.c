@@ -264,10 +264,14 @@ int distance(Graph* g, int city_x, int city_y) {
     for (int i = 0; i < n_nodes; i++) {
         dist[i] = (int*)malloc(g->n * sizeof(int));
         for (int j = 0; j < n_nodes; j++) {
-            if (g->adj[i][j] == 0) {
-                dist[i][j] = INF;
+            if (i == j) {
+                dist[i][j] = 0;
             } else {
-                dist[i][j] = 1;
+                if (g->adj[i][j] == 0) {
+                    dist[i][j] = INF;
+                } else {
+                    dist[i][j] = 1;
+                }
             }
         }
     }
@@ -301,10 +305,14 @@ int railway_capital(Graph* g) {
     for (int i = 0; i < n_nodes; i++) {
         dist[i] = (int*)malloc(g->n * sizeof(int));
         for (int j = 0; j < n_nodes; j++) {
-            if (g->adj[i][j] == 0) {
-                dist[i][j] = INF;
+            if (i == j) {
+                dist[i][j] = 0;
             } else {
-                dist[i][j] = 1;
+                if (g->adj[i][j] == 0) {
+                    dist[i][j] = INF;
+                } else {
+                    dist[i][j] = 1;
+                }
             }
         }
     }
@@ -419,7 +427,7 @@ int main() {
         printf("%d ", upgrades[i]);
     }
     printf("\n");
-    printf("Distance between 4 and 5: %d\n", distance(g, 4-1, 5-1));
+    printf("Distance between 4 and 4: %d\n", distance(g, 4-1, 4-1));
     printf("Distance between 4 and 6: %d\n", distance(g, 4-1, 6-1));
     printf("Distance between 1 and 5: %d\n", distance(g, 1-1, 5-1));
     printf("Distance between 2 and 5: %d\n", distance(g, 2-1, 5-1));
